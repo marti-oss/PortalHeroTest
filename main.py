@@ -15,14 +15,14 @@ class FileHandler(FileSystemEventHandler):
         file_path = event.src_path
         if file_path.endswith(".csv"):
             logging.info(f"New file detected: {file_path}")
-            action = "feed" if "feed" in file_path else "portal"
-            rows = process_csv(file_path, action)
-
-            if rows:
-                if action == "feed":
-                    synchronize_feed_items(rows)
-                elif action == "portal":
-                    synchronize_portal_data(rows)
+            action = "feed" if "feed" in file_path else "portal" if "portal" in file_path else None
+            if action:
+                rows = process_csv(file_path, action)
+                if rows:
+                    if action == "feed":
+                        synchronize_feed_items(rows)
+                    elif action == "portal":
+                        synchronize_portal_data(rows)
 
 def process_csv(file_path, action)->list:
     logging.info(f"Processing CSV file: {file_path}")
