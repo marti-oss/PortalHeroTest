@@ -1,9 +1,6 @@
-# tests/test_feed_item_unittest.py
 import unittest
 from unittest.mock import patch, MagicMock
-
-# Ajuste esta importación al path real de su módulo
-from database.feed.feed_item import FeedItem
+from database.feed_item import FeedItem
 
 
 def make_mock_conn(fetchall_return):
@@ -33,8 +30,8 @@ class TestFeedItem(unittest.TestCase):
         self.assertIn("DO UPDATE SET", sql)
         self.assertIn("RETURNING product_id", sql)
 
-    @patch("database.feed.feed_item.execute_values")
-    @patch("database.feed.feed_item.psycopg2.connect")
+    @patch("database.feed_item.execute_values")
+    @patch("database.feed_item.psycopg2.connect")
     def test_insert_feed_items_success(self, mock_connect, mock_execute_values):
         rows = [(1, "Title 1", 9.99, 10), (2, "Title 2", 19.99, 10)]
         mock_connect.return_value = self.mock_conn
@@ -57,8 +54,8 @@ class TestFeedItem(unittest.TestCase):
 
         self.mock_conn.close.assert_called_once()
 
-    @patch("database.feed.feed_item.execute_values")
-    @patch("database.feed.feed_item.psycopg2.connect")
+    @patch("database.feed_item.execute_values")
+    @patch("database.feed_item.psycopg2.connect")
     def test_insert_feed_items_execute_values_raises(self, mock_connect, mock_execute_values):
         rows = [(1, "Title", 9.99, 10)]
         mock_conn_err, _ = make_mock_conn(None)

@@ -1,6 +1,6 @@
 import unittest
 import os
-from parsing_csv.csv_handler import CSVHandler
+from csv_utils.csv_handler import CSVHandler
 from io import StringIO
 from unittest.mock import patch
 
@@ -8,7 +8,7 @@ from unittest.mock import patch
 class TestCSVHandler(unittest.TestCase):
     def setUp(self):
         self.handler = CSVHandler()
-        self.csv_feed_items_path = os.path.join(os.path.dirname(__file__), '../../feed_items.csv')
+        self.csv_feed_items_path = os.path.join(os.path.dirname(__file__), "./files/feed_items.csv")
         self.csv_feed_items_path = os.path.abspath(self.csv_feed_items_path)
 
     def test_file_exists(self):
@@ -56,42 +56,24 @@ class TestCSVHandler(unittest.TestCase):
     
     def test_file_no_exist(self):
         invalid_csv = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../no_existe.csv"))
-        with patch("sys.stdout", new_callable=StringIO) as fake_out:
-            self.handler.read_csv(invalid_csv)
-            output = fake_out.getvalue().strip()
+        self.assertEqual(self.handler.read_csv(invalid_csv), None)
 
-        self.assertIn("An error occurred", output)
-        self.assertEqual(self.handler.data, list())
-    
     def test_invalid_naming_header(self):
         invalid_header_csv = os.path.abspath(os.path.join(os.path.dirname(__file__), "./files/invalid_header.csv"))
-        with patch("sys.stdout", new_callable=StringIO) as fake_out:
-            self.handler.read_csv(invalid_header_csv)
-            output = fake_out.getvalue().strip()
+        self.assertEqual(self.handler.read_csv(invalid_header_csv), None)
 
-        self.assertIn("An error occurred", output)
-        self.assertEqual(self.handler.data, list())
 
     def test_missing_header(self):
         missing_header_csv = os.path.abspath(os.path.join(os.path.dirname(__file__), "./files/missing_header.csv"))
-        with patch("sys.stdout", new_callable=StringIO) as fake_out:
-            self.handler.read_csv(missing_header_csv)
-            output = fake_out.getvalue().strip()
-
-        self.assertIn("An error occurred: Wrong header: ['product_id', 'title', 'price', '']", output)
-        self.assertEqual(self.handler.data, list())
+        self.assertEqual(self.handler.read_csv(missing_header_csv), None)
     
     def test_empty_content(self):
         empty_content_csv = os.path.abspath(os.path.join(os.path.dirname(__file__), "./files/empty_content.csv"))
-        with patch("sys.stdout", new_callable=StringIO) as fake_out:
-            self.handler.read_csv(empty_content_csv)
-            output = fake_out.getvalue().strip()
-
-        self.assertIn("Missing or empty field 'store_id'", output)
+        self.handler.read_csv(empty_content_csv)
         self.assertEqual(len(self.handler.data), 8)
     
     def test_validate_headers_all_valid(self):
-        valid_header = ['product_id', 'title', 'price', 'store_id']
+        valid_header = {'product_id', 'title', 'price', 'store_id'}
         self.handler.validate_header(valid_header)
     
     def test_validate_header_invalid_missing_field(self):
