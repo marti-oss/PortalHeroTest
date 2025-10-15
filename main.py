@@ -1,7 +1,28 @@
 import sys
+import os
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 from logger import logging 
 from csv_utils.csv_handler import CSVHandler
 from database.feed_item import FeedItem
+
+
+class FileHandler(FileSystemEventHandler):
+    def on_created(self, event):
+        if event.is_directory:
+            return
+        file_path = event.src_path
+        if file_path.endswith(".csv"):
+            logging.info(f"New file detected: {file_path}")
+            action = "feed" if "feed" in file_path else "portal"
+            rows = process_csv(file_path, action)
+
+            if rows:
+                if action == "feed":
+                    synchronize_feed_items(rows)
+                elif action == "portal":
+                    synchronize_portal_data(rows)
 
 def process_csv(file_path, action)->list:
     logging.info(f"Processing CSV file: {file_path}")
@@ -36,16 +57,25 @@ def synchronize_portal_data(portal_rows):
     logging.info("Portal data synchronization complete.")
 
 def main() -> int:
-    logging.info("Starting program...")
+    folder_to_watch = os.getenv("FOLDER_TO_WATCH")
+    if not os.path.exists(folder_to_watch):
+        logging.error(f"Folder not found: {folder_to_watch}")
+        return 1
 
-    feed_rows = process_csv('feed_items.csv', action='feed')
-    if feed_rows:
-        synchronize_feed_items(feed_rows)
-    portal_rows = process_csv('portal_items.csv', action='portal')
-    if portal_rows:
-        synchronize_portal_data(portal_rows)
+    logging.info(f"Starting folder monitoring: {folder_to_watch}")
+    event_handler = FileHandler()
+    observer = Observer()
+    observer.schedule(event_handler, folder_to_watch, recursive=False)
+    observer.start()
 
-    logging.info("Program execution complete.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
+    logging.info("Folder monitoring stopped.")
     return 0
 
 if __name__ == "__main__":
